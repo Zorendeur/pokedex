@@ -28,7 +28,7 @@ const capitalizeFirstLetter = (string: string): string => {
 }
 
 export const fetchPokemon = async (id: number): Promise<Pokemon> => {
-    const response = await fetch(`${process.env.URLAPIPOKEMONALL}${id}`);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_URLAPIPOKEMONALL}${id}`);
     const data = await response.json();
 
     const types: string[] = data.types.map((type: any) => capitalizeFirstLetter(type.type.name));
@@ -47,7 +47,7 @@ export const fetchPokemon = async (id: number): Promise<Pokemon> => {
 
 
 export const fetchPokemonSolo = async (id: number): Promise<PokemonSolo> => {
-    const response = await fetch(`${process.env.URLAPIPOKEMONALL}${id}`);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_URLAPIPOKEMONALL}${id}`);
     const data = await response.json();
 
     const types: string[] = data.types.map((type: any) => capitalizeFirstLetter(type.type.url));

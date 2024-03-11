@@ -19,7 +19,7 @@ const TypeFilter: React.FC<TypeFilterProps> = ({ selectedType, onTypeChange }) =
   useEffect(() => {
     const fetchPokemonTypes = async () => {
       try {
-        const response = await fetch(`${process.env.URLAPIPOKEMONTYPE}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_URLAPIPOKEMONTYPE}`);
         const data = await response.json();
         const typesData: PokemonType[] = data.results;
         const typesList: string[] = typesData.map(type => capitalizeFirstLetter(type.name));
