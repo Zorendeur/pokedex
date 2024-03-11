@@ -1,113 +1,137 @@
-import Image from "next/image";
+"use client"
+import React, { useEffect, useState } from 'react';
+import { Pokemon, fetchPokemon } from '@/api/fetchPokemon';
+import { PokemonSolo, fetchPokemonSolo } from "@/api/fetchPokemon";
+import { PokemonList } from '@/components/pokemonList';
+import TypeFilter from '@/components/typeFilter';
 
 export default function Home() {
+  const [pokemonList, setPokemonList] = useState<Pokemon[]>([]);
+  const [filteredPokemonList, setFilteredPokemonList] = useState<Pokemon[]>([]);
+  const [selectedType, setSelectedType] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [currentPage, setCurrentPage] = useState<number>(1); // État pour le numéro de page actuel
+  const pokemonPerPage = 21; // Nombre de Pokémon par page
+  const [pokeNameFrList, setPokeNameFrList] = useState<string[]>([]);
+  const [pokeTypeFrList, setPokeTypeFrList] = useState<string[][]>([]);
+
+
+  useEffect(() => {
+    const fetchPokemonList = async () => {
+      setIsLoading(true);
+      try {
+        const fetchedPokemonList: Pokemon[] = [];
+        const pokeNameFrList: string[] = [];
+        const pokeTypeFrList: string[][] = [];
+
+        for (let i = 1; i <= 386; i++) {
+                const pokemon = await fetchPokemon(i);
+                const pokemonSolo = await fetchPokemonSolo(i);
+                const speciesResponse = await fetch(pokemonSolo.species);
+                const speciesData = await speciesResponse.json();
+
+                const nameEntryFr = speciesData.names.find((entry: any) => entry.language.name === 'fr');
+                const pokeNameFr = nameEntryFr ? nameEntryFr.name : 'Nom non disponible';
+                pokeNameFrList.push(pokeNameFr);
+
+                const typeEntries: { url: string }[] = pokemonSolo.type.map((url: string) => ({ url }));
+                const typeNamesFr: string[] = [];
+
+                for (const entry of typeEntries) {
+                    const response = await fetch(entry.url);
+                    const typeData = await response.json();
+                    const typeNameFr = typeData.names.find((nameEntry: any) => nameEntry.language.name === 'fr');
+                    typeNamesFr.push(typeNameFr ? typeNameFr.name : 'Type non disponible');
+                }
+
+                fetchedPokemonList.push(pokemon);
+                pokeTypeFrList.push(typeNamesFr);
+            }
+
+            setPokemonList(fetchedPokemonList);
+            setFilteredPokemonList(fetchedPokemonList);
+            setPokeNameFrList(pokeNameFrList);
+            setPokeTypeFrList(pokeTypeFrList);
+        } catch (error) {
+            console.error('Erreur lors du chargement des Pokémon :', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    fetchPokemonList();
+}, []);
+
+  const handleTypeChange = (type: string) => {
+    setSelectedType(type);
+    if (type === '') {
+      setFilteredPokemonList(pokemonList);
+    } else {
+      const filteredPokemon = pokemonList.filter(pokemon => pokemon.type.includes(type));
+      setFilteredPokemonList(filteredPokemon);
+    }
+  };
+
+  // Fonction pour obtenir les Pokémon de la page actuelle
+  const getCurrentPokemon = () => {
+    const indexOfLastPokemon = currentPage * pokemonPerPage;
+    const indexOfFirstPokemon = indexOfLastPokemon - pokemonPerPage;
+    return filteredPokemonList.slice(indexOfFirstPokemon, indexOfLastPokemon);
+  };
+
+  // Fonction pour passer à la page précédente
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Fonction pour passer à la page suivante
+  const goToNextPage = () => {
+    const totalPages = Math.ceil(filteredPokemonList.length / pokemonPerPage);
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Fonction pour changer de page
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
+  // Calculer le nombre de pages à afficher
+  const totalPages = Math.ceil(filteredPokemonList.length / pokemonPerPage);
+  const displayPages = Math.min(5, totalPages);
+
+  // Calculer l'indice de départ des boutons de pagination
+  const startPage = Math.max(1, currentPage - Math.floor(displayPages / 2));
+  const endPage = Math.min(startPage + displayPages - 1, totalPages);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+    <main className='bg-slate-900 pt-5'>
+      <h1 className='text-white text-center text-5xl'>Bienvenue sur mon Pokédex</h1>
+      <TypeFilter selectedType={selectedType} onTypeChange={handleTypeChange}/>
+      {isLoading ? (
+        <p className="text-white text-center">Chargement en cours...</p>
+      ) : (
+        <>
+          <PokemonList pokemon={getCurrentPokemon()} pokeNameFrList={pokeNameFrList} pokeTypeFrList={pokeTypeFrList} />
+          <div className="text-white flex justify-center items-center text-2xl m-5">
+            {currentPage > 1 && (
+              <button className='mx-5' onClick={goToPrevPage}>Précédent</button>
+            )}
+            {Array.from({ length: endPage - startPage + 1 }).map((_, index) => {
+              const pageNumber = startPage + index;
+              return (
+                <button key={index} onClick={() => paginate(pageNumber)} className={currentPage === pageNumber ? "active mx-5 w-10 border-2 border-white rounded-md" : "mx-5"}>
+                  {pageNumber}
+                </button>
+              );
+            })}
+            {currentPage < totalPages && (
+              <button className='mx-5' onClick={goToNextPage}>Suivant</button>
+            )}
+          </div>
+        </>
+      )}
     </main>
   );
 }
