@@ -20,47 +20,48 @@ export default function Home() {
     const fetchPokemonList = async () => {
       setIsLoading(true);
       try {
-        const fetchedPokemonList: Pokemon[] = [];
+        const pokemonPromises = Array.from({ length: 386 }, (_, i) => fetchPokemon(i + 1));
+        const pokemonSoloPromises = Array.from({ length: 386 }, (_, i) => fetchPokemonSolo(i + 1));
+  
+        const fetchedPokemonList = await Promise.all(pokemonPromises);
+        const fetchedPokemonSoloList = await Promise.all(pokemonSoloPromises);
+  
         const pokeNameFrList: string[] = [];
         const pokeTypeFrList: string[][] = [];
-
-        for (let i = 1; i <= 386; i++) {
-                const pokemon = await fetchPokemon(i);
-                const pokemonSolo = await fetchPokemonSolo(i);
-                const speciesResponse = await fetch(pokemonSolo.species);
-                const speciesData = await speciesResponse.json();
-
-                const nameEntryFr = speciesData.names.find((entry: any) => entry.language.name === 'fr');
-                const pokeNameFr = nameEntryFr ? nameEntryFr.name : 'Nom non disponible';
-                pokeNameFrList.push(pokeNameFr);
-
-                const typeEntries: { url: string }[] = pokemonSolo.type.map((url: string) => ({ url }));
-                const typeNamesFr: string[] = [];
-
-                for (const entry of typeEntries) {
-                    const response = await fetch(entry.url);
-                    const typeData = await response.json();
-                    const typeNameFr = typeData.names.find((nameEntry: any) => nameEntry.language.name === 'fr');
-                    typeNamesFr.push(typeNameFr ? typeNameFr.name : 'Type non disponible');
-                }
-
-                fetchedPokemonList.push(pokemon);
-                pokeTypeFrList.push(typeNamesFr);
-            }
-
-            setPokemonList(fetchedPokemonList);
-            setFilteredPokemonList(fetchedPokemonList);
-            setPokeNameFrList(pokeNameFrList);
-            setPokeTypeFrList(pokeTypeFrList);
-        } catch (error) {
-            console.error('Erreur lors du chargement des Pokémon :', error);
-        } finally {
-            setIsLoading(false);
-        }
+  
+        await Promise.all(
+          fetchedPokemonSoloList.map(async (pokemonSolo, index) => {
+            const speciesResponse = await fetch(pokemonSolo.species);
+            const speciesData = await speciesResponse.json();
+            const nameEntryFr = speciesData.names.find((entry: any) => entry.language.name === 'fr');
+            pokeNameFrList[index] = nameEntryFr ? nameEntryFr.name : 'Nom non disponible';
+  
+            const typeNamesFr = await Promise.all(
+              pokemonSolo.type.map(async (url: string) => {
+                const response = await fetch(url);
+                const typeData = await response.json();
+                const typeNameFr = typeData.names.find((nameEntry: any) => nameEntry.language.name === 'fr');
+                return typeNameFr ? typeNameFr.name : 'Type non disponible';
+              })
+            );
+            pokeTypeFrList[index] = typeNamesFr;
+          })
+        );
+  
+        setPokemonList(fetchedPokemonList);
+        setFilteredPokemonList(fetchedPokemonList);
+        setPokeNameFrList(pokeNameFrList);
+        setPokeTypeFrList(pokeTypeFrList);
+      } catch (error) {
+        console.error('Erreur lors du chargement des Pokémon :', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
-
+  
     fetchPokemonList();
-}, []);
+  }, []);
+  
 
   const handleTypeChange = (type: string) => {
     setSelectedType(type);
@@ -121,8 +122,8 @@ export default function Home() {
             {Array.from({ length: endPage - startPage + 1 }).map((_, index) => {
               const pageNumber = startPage + index;
               return (
-                <div className='hidden sm:block'>
-                <button key={index} onClick={() => paginate(pageNumber)} className={currentPage === pageNumber ? "active mx-5 w-10 border-2 border-white rounded-md" : "mx-5"}>
+                <div key={pageNumber} className='hidden sm:block'>
+                <button onClick={() => paginate(pageNumber)} className={currentPage === pageNumber ? "active mx-5 w-10 border-2 border-white rounded-md" : "mx-5"}>
                   {pageNumber}
                 </button>
                 </div>
