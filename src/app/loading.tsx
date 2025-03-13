@@ -2,7 +2,7 @@
 
 export default function LoadingSpinner() {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="flex justify-center items-center h-screen bg-slate-900">
         <div className="loader"></div>
         <style jsx>{`
           .loader {

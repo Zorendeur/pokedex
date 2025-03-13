@@ -114,16 +114,18 @@ export default function Home() {
       ) : (
         <>
           <PokemonList pokemon={getCurrentPokemon()} pokeNameFrList={pokeNameFrList} pokeTypeFrList={pokeTypeFrList} />
-          <div className="text-white flex justify-center items-center text-2xl m-5">
+          <div className="text-white flex justify-center items-center text-2xl m-5 bg-slate-900">
             {currentPage > 1 && (
-              <button className='mx-5' onClick={goToPrevPage}>Précédent</button>
+              <button className='mx-5 text-white p-2 bg-indigo-600 border-2 border-white rounded-xl hover:shadow-[0_7px_0px_0px_rgba(0,0,0,0.3)] hover:shadow-white ease-linear duration-200 hover:animate-bounce' onClick={goToPrevPage}>Précédent</button>
             )}
             {Array.from({ length: endPage - startPage + 1 }).map((_, index) => {
               const pageNumber = startPage + index;
               return (
+                <div className='hidden sm:block'>
                 <button key={index} onClick={() => paginate(pageNumber)} className={currentPage === pageNumber ? "active mx-5 w-10 border-2 border-white rounded-md" : "mx-5"}>
                   {pageNumber}
                 </button>
+                </div>
               );
             })}
             {currentPage < totalPages && (

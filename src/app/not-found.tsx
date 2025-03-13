@@ -10,7 +10,7 @@ export default function NotFound() {
           <p className="mt-6 text-base leading-7 text-white">Sorry, we couldn’t find the page you’re looking for.</p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
             <a
-              href="#"
+              href="/"
               className="text-white font-semibold p-2 bg-indigo-600 border-2 border-white rounded-md shadow-[3px_3px_12px_-2px_rgba(0,0,0,0.3)] shadow-white"
             >
               Go back home

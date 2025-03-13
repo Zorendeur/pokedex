@@ -55,7 +55,7 @@ export default function PokedexCard({ pokemon, pokeNameFrList, pokeTypeFrList}: 
 
     return (
       <Link href={`/Pokemon/${pokemon.id}`}>
-        <div className={`text-white m-5 w-44 h-52 border-2 border-white rounded-md flex flex-col justify-center items-center shadow-[3px_3px_12px_-2px_rgba(0,0,0,0.3)] shadow-white hover:scale-125 transition-transform ${getBackgroundColor(pokemon.type[0])}`}>
+        <div className={`text-white m-5 w-44 h-52 border-2 border-white rounded-md flex flex-col justify-center items-center shadow-[3px_3px_12px_-2px_rgba(0,0,0,0.3)] shadow-white md:hover:scale-125 transition-transform ${getBackgroundColor(pokemon.type[0])}`}>
             <p className="-mt-5 mb-2 -ml-32">N°{pokemon.id}</p>
             <h2 className="text-xl font-bold">{pokeNameFrList[index]}</h2>
             <img src={pokemon.imageUrl} alt={`${pokemon.name} image`}></img>
